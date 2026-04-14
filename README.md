@@ -1,6 +1,8 @@
 <div align="center">
 
-# ✈️ Airline Database Analysis Using SQL  
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:134E5E,100:71B280&height=200&section=header&text=Airline%20Database%20Analysis&fontSize=30&fontColor=ffffff&animation=fadeIn" />
+
+### ✈️ Airline Database Analysis Using SQL  
 ### *Querying with PostgreSQL*
 
 ![Database](https://img.shields.io/badge/Database-PostgreSQL%2014-blue?style=for-the-badge)
