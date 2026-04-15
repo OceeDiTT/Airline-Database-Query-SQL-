@@ -180,7 +180,7 @@ To replicate this project:
 1. Install PostgreSQL 14  
 2. Load the airline database `Airlines.sql`
 3. Connect via pgAdmin or terminal  
-4. Execute queries from the cases listed  
+4. Execute queries from `queries.sql`  
 5. Modify queries to explore additional insights  
 
 ---
