@@ -211,6 +211,89 @@ FROM (SELECT passenger_name, COUNT(*)cnt FROM tickets GROUP BY passenger_name)su
 ORDER BY percent DESC;
 
 
+-- CASE XXII: What are the maximum and minimum ticket prices in all directions?
+
+SELECT (SELECT city->>'en' FROM airports WHERE airport_code= f.departure_airport) AS departure_city,
+SELECT city->>'en' FROM airports WHERE airport_code= f.arrival_airport) AS arrival_city, MAX(tf.amount), MIN(tf.amount)
+FROM flights f
+JOIN ticket_flights tf
+ON f.flight_id = tf.flight_id
+GROUP BY 1,2
+ORDER BY 1,2;
+
+
+-- CASE XXIII: Get a list of airports in cities with more than one airports.
+
+SELECT aa.city->>'en' AS city, aa.airport_code, aa.airport_name->>'en' AS airport
+FROM (SELECT city, COUNT(*) FROM airports GROUP BY city HAVING COUNT(*)>1) AS a
+JOIN airports AS aa
+ON a.city= aa.city
+ORDER BY aa.city, aa.airport_name;
+
+
+-- CASE XXIV: What will be the total number of different routes that are theoretically laid between all cities?
+
+SELECT COUNT(*)
+FROM(SELECT DISTINCT city FROM airports) AS a1
+JOIN(SELECT DISTINCT city FROM airports) AS a2
+ON a1.city <> a2.city;
+
+
+-- CASE XXV: Suppose our airline marketers want to know how often there are different names among the passengers?
+
+SELECT LEFT(passenger_name, STRPOS(passenger_name, ' ')-1) AS firstname, COUNT(*)
+FROM tickets
+GROUP BY 1
+ORDER BY 2 DESC;
+
+
+-- CASE XXVI: What combination of first names and last names separately occur most often?
+-- What is the ratio of the passengers with such names to the total number of passengers?
+
+WITH p AS (SELECT LEFT(passenger_name, POSITION(' ' IN passenger_name)) AS passenger_name FROM tickets)
+SELECT passenger_name, round(100.0*cnt/SUM(cnt)OVER(),2) AS percent
+FROM(SELECT passenger_name, COUNT(*)cnt FROM p GROUP BY passenger_name)t
+ORDER BY percent DESC;
+
+
+-- CASE XXVII: For each ticket, display all the included flight segments, together with connection time.
+-- Limit the result to the tickets booked a week ago.
+
+SELECT tf.ticket_no, f.departure_airport, f.arrival_airport, f.scheduled_arrival,
+LEAD(f.scheduled_departure)OVER w AS next_departure,
+LEAD(f.scheduled_departure)OVER w - f.scheduled_arrival AS gap
+FROM bookings b
+JOIN tickets t
+ON t.book_ref = b.book_ref
+JOIN ticket_flights tf
+ON tf.ticket_no = t.ticket_no
+JOIN flights f
+ON tf.flight_id = f.flight_id
+WHERE b.book_date = public.now()::date - INTERVAL '7day'
+WINDOW w AS (PARTITION BY tf.ticket_no ORDER BY f.scheduled_departure);
+
+
+-- CASE XXVIII: Which flights had the longest delays?
+
+SELECT f.flight_no, f.scheduled_departure, f.actual_departure,
+(f.actual_departure - f.scheduled_departure) AS delay
+FROM flights f
+WHERE f.actual_departure IS NOT NULL
+ORDER BY f.actual_departure - f.scheduled_departure DESC;
+
+
+-- CASE XXIX: How many seats remained free on the flight PG0404 
+-- in the day before the last in the airlines database?
+
+SELECT COUNT(*) AS free_seats
+FROM flights f
+JOIN seats s
+ON s.aircraft_code = f.aircraft_code
+WHERE f.flight_no = 'PG0404'
+AND f.scheduled_departure::date = public.now()::date - INTERVAL '1day'
+AND NOT EXISTS (SELECT NULL FROM boarding_passes bp WHERE bp.flight_id = f.flight_id AND bp.seat_no = s.seat_no);
+
+
 
 
 
